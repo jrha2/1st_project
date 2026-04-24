@@ -196,11 +196,12 @@ class _SmartAlarmDialogState extends State<SmartAlarmDialog> {
                 context: context,
                 initialTime: selectedTime,
               );
-              if (time != null)
+              if (time != null) {
                 setState(() {
                   selectedTime = time;
                   _updateDateByOffset();
                 });
+              }
             },
             child: Text(
               "${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}",
@@ -295,7 +296,7 @@ class _SmartAlarmDialogState extends State<SmartAlarmDialog> {
               lastDate: DateTime(2030),
               currentDate: today,
               onDateChanged: (date) {
-                if (tempEnabled)
+                if (tempEnabled) {
                   setState(() {
                     currentResultDate = DateTime(
                       date.year,
@@ -307,6 +308,7 @@ class _SmartAlarmDialogState extends State<SmartAlarmDialog> {
                     calendarFocusDate = currentResultDate;
                     calendarKey = UniqueKey();
                   });
+                }
               },
             ),
           ),

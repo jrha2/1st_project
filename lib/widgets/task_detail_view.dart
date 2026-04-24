@@ -24,8 +24,9 @@ class _TaskDetailViewState extends State<TaskDetailView> {
 
     if (result != null) {
       setState(() {
-        if (!_taskData.containsKey(widget.nodeName))
+        if (!_taskData.containsKey(widget.nodeName)) {
           _taskData[widget.nodeName] = [];
+        }
         _taskData[widget.nodeName]!.add({
           "title": result['title'],
           "dueDate": result['dueDate'],
