@@ -32,10 +32,10 @@ class _TaskCardItemState extends State<TaskCardItem> {
         initiallyExpanded: task['isExpanded'] ?? false,
         onExpansionChanged: (v) => setState(() => task['isExpanded'] = v),
         leading: Checkbox(
-          value: task['done'],
+          // 만약 데이터가 없으면(null) 거짓(false)으로 처리하라는 뜻입니다.
+          value: task['isCompleted'] == 1 || task['isCompleted'] == true,
           onChanged: (v) {
-            setState(() => task['done'] = v);
-            widget.onRefresh();
+            // 여기에 체크 박스 변경 로직 추가 예정
           },
         ),
         title: Text(
@@ -70,7 +70,13 @@ class _TaskCardItemState extends State<TaskCardItem> {
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Text("기한: ${DateFormat('yyyy-MM-dd').format(task['dueDate'])}"),
+        // task['dueDate']가 비어있으면 '기한 없음'이라고 표시하고, 있으면 날짜를 보여줍니다.
+        Text(
+          task['dueDate'] != null
+              ? "기한: ${DateFormat('yyyy-MM-dd').format(task['dueDate'])}"
+              : "기한: 없음",
+        ),
+
         const SizedBox(width: 12),
         Icon(
           Icons.notifications_active,
@@ -130,7 +136,7 @@ class _TaskCardItemState extends State<TaskCardItem> {
             ),
           ],
         ),
-        ...(task['subTasks'] as List).asMap().entries.map((entry) {
+        ...((task['subTasks'] ?? []) as List).asMap().entries.map((entry) {
           int idx = entry.key;
           var st = entry.value;
           return Row(
@@ -202,7 +208,7 @@ class _TaskCardItemState extends State<TaskCardItem> {
                   border: InputBorder.none,
                 ),
               ),
-              if ((task['comments'] as List).isNotEmpty)
+              if ((task['comments'] as List? ?? []).isNotEmpty)
                 _buildCommentsList(task),
               _buildCommentInput(),
             ],

@@ -61,7 +61,22 @@ class _TaskDetailViewState extends State<TaskDetailView> {
             '할 일 목록',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          // _taskData 대신 실제 DB 데이터인 _tasks.length를 사용합니다.
+          // --- 여기 아래 버튼을 잠시 추가해서 테스트해봅시다 ---
+          IconButton(
+            icon: const Icon(Icons.add_circle, color: Colors.blue),
+            onPressed: () async {
+              // 임시 데이터 생성
+              final testTask = TaskModel(
+                title: "드디어 첫 데이터!",
+                memo: "DB에 잘 들어갔는지 확인용입니다.",
+              );
+              // DB에 저장
+              await _dbHelper.insertTask(testTask);
+              // 화면 새로고침
+              _refreshTasks();
+            },
+          ),
+          // ----------------------------------------------
           Text('전체 ${_tasks.length}개'),
         ],
       ),
