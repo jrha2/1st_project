@@ -31,7 +31,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _buildHeader(), // 상단 헤더
+        _buildHeader(),
         const Divider(height: 1),
         Expanded(
           child: _tasks.isEmpty
@@ -40,7 +40,6 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                   itemCount: _tasks.length,
                   itemBuilder: (context, index) {
                     final taskModel = _tasks[index];
-                    // GitHub의 TaskCardItem은 'task'라는 이름의 Map을 받습니다.
                     return TaskCardItem(
                       task: taskModel.toMap(),
                       onRefresh: _refreshTasks,
@@ -52,7 +51,6 @@ class _TaskDetailViewState extends State<TaskDetailView> {
     );
   }
 
-  // 기존에 _taskData를 참조하던 부분을 수정했습니다.
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -63,7 +61,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
             '할 일 목록',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          // 전체 개수를 DB 리스트인 _tasks.length로 표시합니다.
+          // _taskData 대신 실제 DB 데이터인 _tasks.length를 사용합니다.
           Text('전체 ${_tasks.length}개'),
         ],
       ),
