@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/task_detail_view.dart'; // 할일 목록 화면
+import '../widgets/task_detail_view.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -9,12 +9,17 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 0; // 하단 메뉴 번호 (할일, 캘린더, 설정)
-  int _selectedFolderIndex = 1; // 좌측 폴더 번호 (0: 계획된, 1: 전체)
+  int _selectedIndex = 0;
+  int _selectedFolderIndex = 1;
 
-  // 하단 메뉴 클릭 시 화면 전환을 위한 리스트
+  double _sidebarWidth = 250.0;
+  bool _isCollapsed = false;
+  final double _minWidth = 150.0;
+  final double _maxWidth = 500.0;
+  final double _collapsedWidth = 60.0; // 접혔을 때 아이콘이 보일 정도의 최소 간격
+
   final List<Widget> _pages = [
-    const TaskDetailView(), // 할일 페이지
+    const TaskDetailView(),
     const Center(child: Text('캘린더 페이지')),
     const Center(child: Text('설정 페이지')),
   ];
@@ -22,14 +27,9 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 1. 하단 네비게이션 바 (루틴 삭제, 설정 추가)
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+        onTap: (index) => setState(() => _selectedIndex = index),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.check_circle_outline),
@@ -42,41 +42,124 @@ class _MainNavigationState extends State<MainNavigation> {
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
         ],
       ),
-
-      // 2. 메인 바디 (좌측 메뉴 + 우측 콘텐츠)
       body: Row(
         children: [
-          // 좌측 슬림 메뉴 (계획된 Task, 전체 Task)
-          NavigationRail(
-            selectedIndex: _selectedFolderIndex,
-            onDestinationSelected: (int index) {
-              setState(() {
-                _selectedFolderIndex = index;
-              });
-              // 여기서 나중에 필터링 로직(DB 쿼리)이 연결됩니다.
-            },
-            labelType: NavigationRailLabelType.all,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.upcoming_outlined),
-                selectedIcon: Icon(Icons.upcoming),
-                label: Text('계획된 Task'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.list_alt_outlined),
-                selectedIcon: Icon(Icons.list_alt),
-                label: Text('전체 Task'),
-              ),
-            ],
+          // 1. 좌측 메뉴 영역
+          Container(
+            width: _isCollapsed ? _collapsedWidth : _sidebarWidth,
+            color: Colors.grey[50],
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                // 접기/펼치기 버튼
+                Align(
+                  alignment: Alignment.center,
+                  child: IconButton(
+                    icon: Icon(
+                      _isCollapsed ? Icons.chevron_right : Icons.chevron_left,
+                    ),
+                    onPressed: () =>
+                        setState(() => _isCollapsed = !_isCollapsed),
+                  ),
+                ),
+                // 메뉴 항목들 (접혔을 때는 아이콘만, 펼쳐졌을 때는 텍스트까지)
+                _buildMenuItem(Icons.upcoming, '계획된 Task', 0),
+                _buildMenuItem(Icons.list_alt, '전체 Task', 1),
+                const Divider(),
+                if (!_isCollapsed)
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        ExpansionTile(
+                          leading: const Icon(
+                            Icons.folder_copy,
+                            color: Colors.blue,
+                          ),
+                          title: const Text(
+                            '프로젝트 그룹',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          initiallyExpanded: true,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 16.0),
+                              child: ExpansionTile(
+                                leading: const Icon(Icons.assignment_outlined),
+                                title: const Text(
+                                  '프로젝트',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 16.0),
+                                    child: ListTile(
+                                      leading: const Icon(
+                                        Icons.folder_outlined,
+                                      ),
+                                      title: const Text(
+                                        '그룹',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      onTap: () {},
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
 
-          // 가로 구분선
-          const VerticalDivider(thickness: 1, width: 1),
+          // 2. 커서가 바뀌는 드래그 조절 바
+          MouseRegion(
+            cursor: _isCollapsed
+                ? SystemMouseCursors.basic
+                : SystemMouseCursors.resizeLeftRight,
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragUpdate: (details) {
+                if (_isCollapsed) return;
+                setState(() {
+                  _sidebarWidth += details.delta.dx;
+                  if (_sidebarWidth < _minWidth) _sidebarWidth = _minWidth;
+                  if (_sidebarWidth > _maxWidth) _sidebarWidth = _maxWidth;
+                });
+              },
+              child: Container(
+                width: 6,
+                color: Colors.grey[300],
+                child: Center(
+                  child: !_isCollapsed
+                      ? const Icon(
+                          Icons.drag_handle,
+                          size: 12,
+                          color: Colors.grey,
+                        )
+                      : null,
+                ),
+              ),
+            ),
+          ),
 
-          // 우측 화면 (선택된 하단 메뉴에 따라 변함)
+          // 3. 우측 콘텐츠 영역
           Expanded(child: _pages[_selectedIndex]),
         ],
       ),
+    );
+  }
+
+  // 메뉴 아이템을 만드는 도구 (접힘 상태 대응)
+  Widget _buildMenuItem(IconData icon, String label, int index) {
+    return ListTile(
+      leading: Icon(icon),
+      title: _isCollapsed ? null : Text(label, overflow: TextOverflow.ellipsis),
+      selected: _selectedFolderIndex == index,
+      onTap: () => setState(() => _selectedFolderIndex = index),
     );
   }
 }
