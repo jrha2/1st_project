@@ -78,6 +78,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                 await _dbHelper.insertTask(newTask);
                 _refreshTasks(); // 목록 새로고침
                 if (!mounted) return;
+                // ignore: use_build_context_synchronously
                 Navigator.pop(context); // 다이얼로그 닫기
               }
             },
