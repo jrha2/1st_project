@@ -10,6 +10,7 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
+  int _selectedFolderIndex = 0; // 이 줄을 새로 추가하세요!
 
   final List<Widget> _pages = [
     const TaskDetailView(), // 할일
@@ -30,53 +31,44 @@ class _MainNavigationState extends State<MainNavigation> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: '할일'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.sync),
-            label: '루틴',
-          ), // Sync 소문자로 수정
+
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month),
             label: '캘린더',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: '더보기'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
         ],
       ),
+
       // 2. 바디 부분에서 왼쪽 그룹/폴더 바와 오른쪽 내용을 나눔
       body: Row(
         children: [
-          // 할일 탭(_selectedIndex == 0)일 때만 왼쪽 폴더 바 표시
-          if (_selectedIndex == 0)
-            Container(
-              width: 70, // 4월 24일 버전 특유의 슬림한 폭
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                border: Border(
-                  right: BorderSide(color: Colors.grey[300]!, width: 1),
-                ),
+          // [좌측 메뉴 바]
+          NavigationRail(
+            selectedIndex: _selectedFolderIndex, // 새로 만들어야 할 변수입니다.
+            onDestinationSelected: (int index) {
+              setState(() {
+                _selectedFolderIndex = index;
+              });
+            },
+            labelType: NavigationRailLabelType.all,
+            destinations: const [
+              NavigationRailDestination(
+                icon: Icon(Icons.upcoming),
+                label: Text('계획된 Task'),
               ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 40),
-                  _buildFolderIcon(Icons.grid_view, "전체", true),
-                  _buildFolderIcon(Icons.work_outline, "업무", false),
-                  _buildFolderIcon(Icons.person_outline, "개인", false),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.add_circle_outline,
-                      color: Colors.grey,
-                    ),
-                    onPressed: () {
-                      /* 그룹 추가 기능 나중에 구현 */
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                ],
+              NavigationRailDestination(
+                icon: Icon(Icons.list_alt),
+                label: Text('전체 Task'),
               ),
-            ),
+            ],
+          ),
 
-          // 실제 페이지 내용
-          Expanded(child: _pages[_selectedIndex]),
+          const VerticalDivider(thickness: 1, width: 1), // 구분선
+          // [우측 메인 콘텐츠]
+          Expanded(
+            child: _pages[_selectedIndex], // 원래 나오던 페이지가 여기에 나옵니다.
+          ),
         ],
       ),
     );
