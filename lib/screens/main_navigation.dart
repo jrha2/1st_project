@@ -9,16 +9,15 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 0; // 하단 바 (할일, 캘린더, 설정)
-  int _selectedFolderIndex = 1; // 좌측 메뉴 (계획된, 전체 등)
+  int _selectedIndex = 0; // 하단 탭 인덱스
+  int _selectedFolderIndex = 1; // 좌측 메뉴 인덱스
 
   double _sidebarWidth = 250.0;
   bool _isCollapsed = false;
-  final double _minWidth = 150.0;
+  final double _minWidth = 160.0;
   final double _maxWidth = 500.0;
-  final double _collapsedWidth = 64.0;
+  final double _collapsedWidth = 70.0; // 접혔을 때 아이콘이 충분히 보일 너비
 
-  // 하단 바 아이템 개수(3개)와 동일하게 페이지 구성
   final List<Widget> _pages = [
     const TaskDetailView(),
     const Center(child: Text('캘린더 페이지')),
@@ -28,6 +27,7 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // 1. 하단 네비게이션 바
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
@@ -43,39 +43,52 @@ class _MainNavigationState extends State<MainNavigation> {
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
         ],
       ),
+
+      // 2. 메인 바디
       body: Row(
         children: [
-          // 1. 좌측 메뉴 영역
+          // [좌측 메뉴 영역]
           SizedBox(
             width: _isCollapsed ? _collapsedWidth : _sidebarWidth,
             child: Container(
               color: Colors.grey[50],
-              // ClipRect는 자식 위젯이 지정된 너비 밖으로 삐져나가지 않게 "칼로 자르듯" 막아줍니다.
-              child: ClipRect(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 10),
-                    IconButton(
-                      icon: Icon(
-                        _isCollapsed ? Icons.chevron_right : Icons.chevron_left,
-                      ),
-                      onPressed: () =>
-                          setState(() => _isCollapsed = !_isCollapsed),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  // 접기/펼치기 토글 버튼
+                  IconButton(
+                    icon: Icon(
+                      _isCollapsed ? Icons.chevron_right : Icons.chevron_left,
                     ),
-                    const SizedBox(height: 10),
+                    onPressed: () =>
+                        setState(() => _isCollapsed = !_isCollapsed),
+                  ),
+                  const SizedBox(height: 10),
 
-                    // 메뉴 항목들 (함수 내부에서 에러 방지 처리 완료)
-                    _buildMenuItem(Icons.upcoming, '계획된 Task', 0),
-                    _buildMenuItem(Icons.list_alt, '전체 Task', 1),
+                  // 고정 메뉴 (계획된, 전체)
+                  _buildMenuItem(Icons.upcoming, '계획된 Task', 0),
+                  _buildMenuItem(Icons.list_alt, '전체 Task', 1),
 
-                    const Divider(),
+                  const Divider(),
 
-                    // 접히지 않았을 때만 리스트 뷰를 렌더링
-                    if (!_isCollapsed)
-                      Expanded(
-                        child: ListView(
-                          padding: EdgeInsets.zero,
-                          children: [
+                  // 프로젝트 계층 리스트 영역
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          if (_isCollapsed) ...[
+                            // 접혔을 때: 아이콘만 세로로 나열
+                            _buildCollapsedIcon(Icons.folder_copy, Colors.blue),
+                            _buildCollapsedIcon(
+                              Icons.assignment_outlined,
+                              Colors.grey,
+                            ),
+                            _buildCollapsedIcon(
+                              Icons.folder_outlined,
+                              Colors.grey,
+                            ),
+                          ] else ...[
+                            // 펼쳐졌을 때: 트리 구조 노출
                             ExpansionTile(
                               leading: const Icon(
                                 Icons.folder_copy,
@@ -119,21 +132,22 @@ class _MainNavigationState extends State<MainNavigation> {
                               ],
                             ),
                           ],
-                        ),
+                        ],
                       ),
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
 
-          // 2. 드래그 조절 바
+          // [중앙 드래그 조절 바]
           MouseRegion(
             cursor: _isCollapsed
                 ? SystemMouseCursors.basic
                 : SystemMouseCursors.resizeLeftRight,
             child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
+              behavior: HitTestBehavior.opaque,
               onHorizontalDragUpdate: (details) {
                 if (_isCollapsed) return;
                 setState(() {
@@ -158,27 +172,30 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
           ),
 
-          // 3. 우측 콘텐츠 영역
+          // [우측 콘텐츠 영역]
           Expanded(child: _pages[_selectedIndex]),
         ],
       ),
     );
   }
 
+  // 메뉴 아이템 빌더 (펼침/접힘 대응)
   Widget _buildMenuItem(IconData icon, String label, int index) {
     return ListTile(
       leading: Icon(icon),
-      // 접혔을 때는 글자를 완전히 없애서 공간 에러를 원천 차단합니다.
       title: _isCollapsed
           ? null
-          : Text(
-              label,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-              softWrap: false,
-            ),
+          : Text(label, overflow: TextOverflow.clip, softWrap: false),
       selected: _selectedFolderIndex == index,
       onTap: () => setState(() => _selectedFolderIndex = index),
+    );
+  }
+
+  // 접혔을 때 보여줄 아이콘 전용 위젯
+  Widget _buildCollapsedIcon(IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 15.0),
+      child: Icon(icon, color: color, size: 22),
     );
   }
 }
