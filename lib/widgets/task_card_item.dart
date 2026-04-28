@@ -23,12 +23,7 @@ class TaskCardItem extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
         // 체크박스 에러 방지
-        leading: Checkbox(
-          value: isCompleted,
-          onChanged: (value) {
-            // TODO: 업데이트 로직 연결 예정
-          },
-        ),
+        leading: Checkbox(value: isCompleted, onChanged: (value) {}),
         title: Text(
           title,
           style: TextStyle(

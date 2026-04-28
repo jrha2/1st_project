@@ -51,6 +51,42 @@ class _TaskDetailViewState extends State<TaskDetailView> {
     );
   }
 
+  void _showAddTaskDialog(BuildContext context) {
+    final TextEditingController titleController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('새로운 할 일 추가'),
+        content: TextField(
+          controller: titleController,
+          decoration: const InputDecoration(hintText: '할 일 제목을 입력하세요'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (titleController.text.isNotEmpty) {
+                final newTask = TaskModel(
+                  title: titleController.text,
+                  memo: "새로 추가된 할 일입니다.", // 나중엔 메모 입력도 추가할게요!
+                );
+                await _dbHelper.insertTask(newTask);
+                _refreshTasks(); // 목록 새로고침
+                Navigator.pop(context); // 다이얼로그 닫기
+              }
+            },
+            child: const Text('추가'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -61,21 +97,15 @@ class _TaskDetailViewState extends State<TaskDetailView> {
             '할 일 목록',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
+
           // --- 여기 아래 버튼을 잠시 추가해서 테스트해봅시다 ---
           IconButton(
-            icon: const Icon(Icons.add_circle, color: Colors.blue),
-            onPressed: () async {
-              // 임시 데이터 생성
-              final testTask = TaskModel(
-                title: "드디어 첫 데이터!",
-                memo: "DB에 잘 들어갔는지 확인용입니다.",
-              );
-              // DB에 저장
-              await _dbHelper.insertTask(testTask);
-              // 화면 새로고침
-              _refreshTasks();
+            icon: const Icon(Icons.add_circle, color: Colors.blue, size: 30),
+            onPressed: () {
+              _showAddTaskDialog(context); // 입력 다이얼로그 호출
             },
           ),
+
           // ----------------------------------------------
           Text('전체 ${_tasks.length}개'),
         ],

@@ -20,14 +20,33 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: '대시보드'),
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: '할 일'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
+      body: Row(
+        // Row를 사용하여 가로로 나눕니다.
+        children: [
+          // 왼쪽: 그룹 선택 바 (4월 24일 버전의 감성)
+          NavigationRail(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) =>
+                setState(() => _selectedIndex = index),
+            labelType: NavigationRailLabelType.all,
+            destinations: const [
+              NavigationRailDestination(
+                icon: Icon(Icons.grid_view),
+                label: Text('전체'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.work_outline),
+                label: Text('업무'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.person_outline),
+                label: Text('개인'),
+              ),
+            ],
+          ),
+          const VerticalDivider(thickness: 1, width: 1),
+          // 오른쪽: 실제 할 일 내용
+          Expanded(child: _pages[_selectedIndex]),
         ],
       ),
     );
