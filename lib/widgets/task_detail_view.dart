@@ -1,115 +1,58 @@
 import 'package:flutter/material.dart';
-import '../models/task_model.dart';
-import '../services/db_helper.dart';
-import 'task_card_item.dart';
+import 'widgets/task_detail_view.dart'; // 프로젝트 구조에 따라 경로 확인
 
-class TaskDetailView extends StatefulWidget {
-  const TaskDetailView({super.key});
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
 
   @override
-  State<TaskDetailView> createState() => _TaskDetailViewState();
+  State<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _TaskDetailViewState extends State<TaskDetailView> {
-  final DBHelper _dbHelper = DBHelper();
-  List<TaskModel> _tasks = [];
+class _MainNavigationState extends State<MainNavigation> {
+  int _selectedIndex = 1; // 기본 '할 일' 선택
 
-  @override
-  void initState() {
-    super.initState();
-    _refreshTasks();
-  }
-
-  Future<void> _refreshTasks() async {
-    final data = await _dbHelper.getTasks();
-    setState(() {
-      _tasks = data;
-    });
-  }
+  final List<Widget> _pages = [
+    const TaskDetailView(showOnlyImportant: true), // 즐겨찾기
+    const TaskDetailView(showOnlyImportant: false), // 할 일
+    const Center(child: Text('설정')),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _buildHeader(),
-        const Divider(height: 1),
-        Expanded(
-          child: _tasks.isEmpty
-              ? const Center(child: Text('등록된 할 일이 없습니다.'))
-              : ListView.builder(
-                  itemCount: _tasks.length,
-                  itemBuilder: (context, index) {
-                    final taskModel = _tasks[index];
-                    return TaskCardItem(
-                      task: taskModel.toMap(),
-                      onRefresh: _refreshTasks,
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  void _showAddTaskDialog(BuildContext context) {
-    final TextEditingController titleController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('새로운 할 일 추가'),
-        content: TextField(
-          controller: titleController,
-          decoration: const InputDecoration(hintText: '할 일 제목을 입력하세요'),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleController.text.isNotEmpty) {
-                final newTask = TaskModel(
-                  title: titleController.text,
-                  memo: "새로 추가된 할 일입니다.", // 나중엔 메모 입력도 추가할게요!
-                );
-                await _dbHelper.insertTask(newTask);
-                _refreshTasks(); // 목록 새로고침
-                if (!mounted) return;
-                // ignore: use_build_context_synchronously
-                Navigator.pop(context); // 다이얼로그 닫기
-              }
-            },
-            child: const Text('추가'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Scaffold(
+      body: Row(
         children: [
-          const Text(
-            '할 일 목록',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          NavigationRail(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (int index) =>
+                setState(() => _selectedIndex = index),
+            backgroundColor: const Color(0xFFF3F2F1),
+            indicatorColor: const Color(0xFF2564CF).withValues(alpha: 0.1),
+            selectedIconTheme: const IconThemeData(color: Color(0xFF2564CF)),
+            unselectedIconTheme: const IconThemeData(color: Colors.grey),
+            labelType: NavigationRailLabelType.all,
+            destinations: const [
+              NavigationRailDestination(
+                icon: Icon(Icons.star_border),
+                selectedIcon: Icon(Icons.star),
+                label: Text('즐겨찾기'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.check_circle_outline),
+                selectedIcon: Icon(Icons.check_circle),
+                label: Text('할 일'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.settings_outlined),
+                selectedIcon: Icon(Icons.settings),
+                label: Text('설정'),
+              ),
+            ],
           ),
-
-          // --- 여기 아래 버튼을 잠시 추가해서 테스트해봅시다 ---
-          IconButton(
-            icon: const Icon(Icons.add_circle, color: Colors.blue, size: 30),
-            onPressed: () {
-              _showAddTaskDialog(context); // 입력 다이얼로그 호출
-            },
+          const VerticalDivider(thickness: 1, width: 1, color: Colors.black12),
+          Expanded(
+            child: IndexedStack(index: _selectedIndex, children: _pages),
           ),
-
-          // ----------------------------------------------
-          Text('전체 ${_tasks.length}개'),
         ],
       ),
     );
