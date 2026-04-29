@@ -84,13 +84,13 @@ class _MainNavigationState extends State<MainNavigation> {
                     // 상단 고정 스마트 리스트
                     _buildToMenuItem(
                       Icons.wb_sunny_outlined,
-                      '오늘 할 일',
+                      '할 일',
                       0,
                       color: Colors.amber[800],
                     ),
                     _buildToMenuItem(
                       Icons.calendar_today_outlined,
-                      '계획된 일정',
+                      '모든 Task',
                       1,
                       color: _primaryBlue,
                     ),
