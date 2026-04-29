@@ -9,14 +9,18 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 0; // 하단 탭 인덱스
-  int _selectedFolderIndex = 1; // 좌측 메뉴 인덱스
+  int _selectedIndex = 0;
+  int _selectedFolderIndex = 1;
 
-  double _sidebarWidth = 250.0;
+  double _sidebarWidth = 260.0;
   bool _isCollapsed = false;
-  final double _minWidth = 160.0;
-  final double _maxWidth = 500.0;
-  final double _collapsedWidth = 70.0; // 접혔을 때 아이콘이 충분히 보일 너비
+  final double _minWidth = 180.0;
+  final double _maxWidth = 450.0;
+  final double _collapsedWidth = 70.0;
+
+  // Microsoft To Do의 메인 테마 컬러 (연한 블루/퍼플 톤)
+  final Color _primaryBlue = const Color(0xFF2564CF);
+  final Color _sidebarBg = const Color(0xFFF3F2F1); // To Do 특유의 연회색 배경
 
   final List<Widget> _pages = [
     const TaskDetailView(),
@@ -27,121 +31,124 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 1. 하단 네비게이션 바
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle_outline),
-            label: '할일',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month),
-            label: '캘린더',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
-        ],
+      backgroundColor: Colors.white, // 메인 콘텐츠 영역은 순백색
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
+        ),
+        child: BottomNavigationBar(
+          elevation: 0,
+          backgroundColor: Colors.white,
+          selectedItemColor: _primaryBlue,
+          unselectedItemColor: Colors.grey[600],
+          currentIndex: _selectedIndex,
+          onTap: (index) => setState(() => _selectedIndex = index),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.check_circle_outline),
+              label: '할일',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_month_outlined),
+              label: '캘린더',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              label: '설정',
+            ),
+          ],
+        ),
       ),
-
-      // 2. 메인 바디
       body: Row(
         children: [
-          // [좌측 메뉴 영역]
+          // 1. Microsoft To Do 스타일 사이드바
           SizedBox(
             width: _isCollapsed ? _collapsedWidth : _sidebarWidth,
             child: Container(
-              color: Colors.grey[50],
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  // 접기/펼치기 토글 버튼
-                  IconButton(
-                    icon: Icon(
-                      _isCollapsed ? Icons.chevron_right : Icons.chevron_left,
+              color: _sidebarBg,
+              child: ClipRect(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 15),
+                    // 접기/펼치기 버튼 (To Do의 햄버거 메뉴 느낌)
+                    IconButton(
+                      icon: Icon(
+                        _isCollapsed ? Icons.menu : Icons.menu_open,
+                        color: Colors.grey[700],
+                      ),
+                      onPressed: () =>
+                          setState(() => _isCollapsed = !_isCollapsed),
                     ),
-                    onPressed: () =>
-                        setState(() => _isCollapsed = !_isCollapsed),
-                  ),
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 10),
 
-                  // 고정 메뉴 (계획된, 전체)
-                  _buildMenuItem(Icons.upcoming, '계획된 Task', 0),
-                  _buildMenuItem(Icons.list_alt, '전체 Task', 1),
+                    // 상단 고정 스마트 리스트
+                    _buildToMenuItem(
+                      Icons.wb_sunny_outlined,
+                      '오늘 할 일',
+                      0,
+                      color: Colors.amber[800],
+                    ),
+                    _buildToMenuItem(
+                      Icons.calendar_today_outlined,
+                      '계획된 일정',
+                      1,
+                      color: _primaryBlue,
+                    ),
 
-                  const Divider(),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 15),
+                      child: Divider(height: 30, thickness: 0.8),
+                    ),
 
-                  // 프로젝트 계층 리스트 영역
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          if (_isCollapsed) ...[
-                            // 접혔을 때: 아이콘만 세로로 나열
-                            _buildCollapsedIcon(Icons.folder_copy, Colors.blue),
-                            _buildCollapsedIcon(
-                              Icons.assignment_outlined,
-                              Colors.grey,
-                            ),
-                            _buildCollapsedIcon(
-                              Icons.folder_outlined,
-                              Colors.grey,
-                            ),
-                          ] else ...[
-                            // 펼쳐졌을 때: 트리 구조 노출
-                            ExpansionTile(
-                              leading: const Icon(
-                                Icons.folder_copy,
-                                color: Colors.blue,
+                    // 프로젝트 계층 리스트
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            if (_isCollapsed) ...[
+                              _buildCollapsedIcon(
+                                Icons.format_list_bulleted,
+                                _primaryBlue,
                               ),
-                              title: const Text(
-                                '프로젝트 그룹',
-                                overflow: TextOverflow.ellipsis,
+                              _buildCollapsedIcon(
+                                Icons.inventory_2_outlined,
+                                Colors.grey[600]!,
                               ),
-                              initiallyExpanded: true,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 16.0),
-                                  child: ExpansionTile(
-                                    leading: const Icon(
-                                      Icons.assignment_outlined,
-                                    ),
-                                    title: const Text(
-                                      '프로젝트',
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 16.0,
-                                        ),
-                                        child: ListTile(
-                                          leading: const Icon(
-                                            Icons.folder_outlined,
-                                          ),
-                                          title: const Text(
-                                            '그룹',
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          onTap: () {},
-                                        ),
-                                      ),
-                                    ],
+                            ] else ...[
+                              // 계층 구조 시각화 (To Do 특유의 폰트와 간격)
+                              Theme(
+                                data: Theme.of(
+                                  context,
+                                ).copyWith(dividerColor: Colors.transparent),
+                                child: ExpansionTile(
+                                  leading: Icon(
+                                    Icons.format_list_bulleted,
+                                    color: _primaryBlue,
+                                    size: 22,
                                   ),
+                                  title: const Text(
+                                    '프로젝트 그룹',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  initiallyExpanded: true,
+                                  children: [_buildSubItem('프로젝트')],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
 
-          // [중앙 드래그 조절 바]
+          // 2. 세련된 구분선 (MouseRegion으로 커서 제어)
           MouseRegion(
             cursor: _isCollapsed
                 ? SystemMouseCursors.basic
@@ -157,41 +164,64 @@ class _MainNavigationState extends State<MainNavigation> {
                 });
               },
               child: Container(
-                width: 6,
-                color: Colors.grey[300],
+                width: 4,
+                color: _sidebarBg,
                 child: Center(
-                  child: !_isCollapsed
-                      ? const Icon(
-                          Icons.drag_handle,
-                          size: 12,
-                          color: Colors.grey,
-                        )
-                      : null,
+                  child: Container(width: 1, color: Colors.grey[300]), // 얇은 실선
                 ),
               ),
             ),
           ),
 
-          // [우측 콘텐츠 영역]
+          // 3. 우측 콘텐츠 영역
           Expanded(child: _pages[_selectedIndex]),
         ],
       ),
     );
   }
 
-  // 메뉴 아이템 빌더 (펼침/접힘 대응)
-  Widget _buildMenuItem(IconData icon, String label, int index) {
+  // To Do 스타일 메뉴 아이템
+  Widget _buildToMenuItem(
+    IconData icon,
+    String label,
+    int index, {
+    Color? color,
+  }) {
+    bool isSelected = _selectedFolderIndex == index;
     return ListTile(
-      leading: Icon(icon),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      leading: Icon(icon, color: color ?? Colors.grey[700], size: 22),
       title: _isCollapsed
           ? null
-          : Text(label, overflow: TextOverflow.clip, softWrap: false),
-      selected: _selectedFolderIndex == index,
+          : Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? _primaryBlue : Colors.black87,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14,
+              ),
+            ),
+      selected: isSelected,
+      selectedTileColor: Colors.white, // 선택되었을 때 배경색 변화
       onTap: () => setState(() => _selectedFolderIndex = index),
     );
   }
 
-  // 접혔을 때 보여줄 아이콘 전용 위젯
+  // To Do 스타일 서브 아이템 (들여쓰기와 아이콘 크기 조절)
+  Widget _buildSubItem(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12.0),
+      child: ListTile(
+        leading: const Icon(Icons.chevron_right, size: 18), // 계층 표시 화살표
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 14, color: Colors.black54),
+        ),
+        onTap: () {},
+      ),
+    );
+  }
+
   Widget _buildCollapsedIcon(IconData icon, Color color) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 15.0),
